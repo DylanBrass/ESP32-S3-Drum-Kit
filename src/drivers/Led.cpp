@@ -1,6 +1,6 @@
 #include "Led.h"
 
-Led::Led(uint8_t pin, bool activeHigh)
+Led::Led(const uint8_t pin, const bool activeHigh)
     : _pin(pin), _activeHigh(activeHigh) {}
 
 void Led::begin() {

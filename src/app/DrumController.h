@@ -4,6 +4,7 @@
 #include "../drivers/PiezoSensor.h"
 #include "pins.h"
 #include "config.h"
+#include "drivers/Switch.h"
 
 class DrumController
 {
@@ -14,11 +15,14 @@ public:
 
 private:
     static constexpr int numberOfPads = 5;
-    Led _statusPin;
+    Switch modeSwitch{Pins::ModeSwitch};
     PiezoSensor pads[numberOfPads] = {
-        PiezoSensor(Pins::PadOrange, Config::Midi::OrangeNote),
-        PiezoSensor(Pins::PadBlue, Config::Midi::BlueNote),
-        PiezoSensor(Pins::PadYellow, Config::Midi::YellowNote),
-        PiezoSensor(Pins::PadRed, Config::Midi::RedNote),
-        PiezoSensor(Pins::PadGreen, Config::Midi::GreenNote)};
+        PiezoSensor(Pins::PadOrange, Config::Midi::OrangeNote, Pins::OrangeDebugLed),
+        PiezoSensor(Pins::PadBlue, Config::Midi::BlueNote, Pins::BlueDebugLed),
+        PiezoSensor(Pins::PadYellow, Config::Midi::YellowNote, Pins::YellowDebugLed),
+        PiezoSensor(Pins::PadRed, Config::Midi::RedNote, Pins::RedDebugLed),
+        PiezoSensor(Pins::PadGreen, Config::Midi::GreenNote, Pins::GreenDebugLed)
+    };
+    void updateMode();
+    void updatePads();
 };
