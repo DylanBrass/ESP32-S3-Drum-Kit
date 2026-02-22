@@ -12,6 +12,8 @@ void DrumController::begin()
     }
     MidiController::begin();
     modeSwitch.begin();
+    modeLed.begin();
+    modeLed.on();
 }
 
 void DrumController::update()
@@ -24,11 +26,13 @@ void DrumController::update()
 void DrumController::updateMode()
 {
     modeSwitch.update();
+    modeLed.update();
 
-    if (modeSwitch.getState() != Config::Midi::CloneheroMode)
+    if (modeSwitch.getState() != Config::IsCloneHeroMode)
     {
-        Config::Midi::CloneheroMode = modeSwitch.getState();
-        Serial.println("Clone Hero Mode: " + String(Config::Midi::CloneheroMode ? "ON" : "OFF"));
+        modeLed.toggle();
+        Config::IsCloneHeroMode = modeSwitch.getState();
+        Serial.println("Clone Hero Mode: " + String(Config::IsCloneHeroMode ? "ON" : "OFF"));
     }
 }
 

@@ -2,8 +2,14 @@
 
 namespace Config
 {
-    namespace Midi
+  bool IsCloneHeroMode = true;
+    namespace Piezo
     {
-        bool CloneheroMode = true;
+        uint16_t getCurrentThreshold()
+        {
+            return IsCloneHeroMode
+                ? CloneHero::PiezoThreshold
+                : Midi::PiezoThreshold;
+        }
     }
 }

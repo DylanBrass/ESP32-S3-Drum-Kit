@@ -3,6 +3,13 @@
 
 #include "Led.h"
 
+enum class PiezoState
+{
+    Idle,
+    CapturingPeak,
+    Cooldown
+};
+
 class PiezoSensor
 {
 public:
@@ -23,4 +30,7 @@ private:
     uint32_t _lastHitTime = 0;
     bool _hit = false;
     uint16_t _velocity;
+    PiezoState _state = PiezoState::Idle;
+    unsigned long _scanStartTime = 0;
+    int _peakValue = 0;
 };

@@ -26,64 +26,69 @@ uint16_t PiezoSensor::getVelocity() const
 
 void PiezoSensor::update()
 {
-    int value = analogRead(_pin);
-    const unsigned long now = millis();
+    const unsigned long nowMicros = micros();
+    const unsigned long nowMillis = millis();
+    // Dummy read to stabilize ADC for more accurate readings in the next call
+    // This was something I saw online that could help
+    analogRead(_pin);
+    const int value = analogRead(_pin);
     _hit = false;
 
-    if (_coolingDown)
+    switch (_state)
     {
-        const bool timeExpired = now - _lastHitTime >= Config::Piezo::WaitTime;
-        const bool signalReset = value < Config::Piezo::ResetThreshold;
-
-        if (timeExpired && signalReset)
+    case PiezoState::Idle:
         {
-            _coolingDown = false;
-        }
-        else
-        {
-            return;
-        }
-    }
-
-    if (value > Config::Piezo::Threshold)
-    {
-        Serial.println("Hit detected, scanning for peak...");
-        const unsigned long scanTimeStart = micros();
-
-        if (Config::Midi::CloneheroMode)
-        {
-            // In Clone Hero mode, we skip the scanning and just use a fixed velocity for any hit above the threshold
-            // This is to have a more stable experience since velocity is not always accurately detected with piezo sensors, especially with fast hits
-            Serial.println("Clone Hero mode enabled:");
-            _velocity = Config::Piezo::CloneHeroDefaultVelocity;
-        }
-        else
-        {
-            while (micros() - scanTimeStart < Config::Piezo::ScanTime)
+            if (value > Config::Piezo::getCurrentThreshold())
             {
-                const int currentValue = analogRead(_pin);
-                if (currentValue > value)
+                // In Clone Hero mode, we skip the velocity calculation and use a fixed velocity for simplicity and consistency
+                if (Config::IsCloneHeroMode)
                 {
-                    value = currentValue;
+                    _velocity = Config::Piezo::CloneHeroDefaultVelocity;
+                    _hit = true;
+                    _lastHitTime = nowMillis;
+                    _state = PiezoState::Cooldown;
+                    _debugLed.on();
+                    break;
                 }
+
+                _peakValue = value;
+                _scanStartTime = nowMicros;
+                _state = PiezoState::CapturingPeak;
             }
-
-            Serial.println("Max value during scan: " + String(value));
-
-            _velocity = calculateVelocity(value);
+            break;
         }
-        _debugLed.on();
+    case PiezoState::CapturingPeak:
+        {
+            if (value > _peakValue)
+                _peakValue = value;
 
-        _hit = true;
-        _lastHitValue = value;
-        _lastHitTime = now;
-        _coolingDown = true;
-    }
+            if (nowMicros - _scanStartTime >= Config::Piezo::ScanTime)
+            {
+                _velocity = calculateVelocity(_peakValue);
 
-    // Turn LED off when ready to hit again
-    if (!_coolingDown)
-    {
-        _debugLed.off();
+                _hit = true;
+                _lastHitTime = nowMillis;
+
+                _state = PiezoState::Cooldown;
+                _debugLed.on();
+            }
+            break;
+        }
+    case PiezoState::Cooldown:
+        {
+            const bool timeExpired =
+                nowMillis - _lastHitTime >= Config::Piezo::WaitTime;
+
+            const bool signalReset =
+                value < Config::Piezo::ResetThreshold;
+
+            if (timeExpired && signalReset)
+            {
+                _state = PiezoState::Idle;
+                _debugLed.off();
+            }
+            break;
+        }
     }
 
     _debugLed.update();
@@ -97,7 +102,7 @@ bool PiezoSensor::isHit() const
 uint16_t PiezoSensor::calculateVelocity(const int peak)
 {
     constexpr uint16_t maxAdc = Config::Piezo::MaxADCValue;
-    constexpr uint16_t threshold = Config::Piezo::Threshold;
+    const uint16_t threshold = Config::Piezo::getCurrentThreshold();
 
     if (peak <= threshold)
     {
@@ -112,9 +117,9 @@ uint16_t PiezoSensor::calculateVelocity(const int peak)
 
     // 1.5 is an empirical multiplier to make the velocity more responsive, adjust as needed
     // We also ensure that the velocity does not exceed 127, which is the maximum MIDI velocity
-    auto velocity = static_cast<uint16_t>(normalized * 127.0f * 1.5f);
+    auto velocity = static_cast<uint16_t>(normalized * Config::Midi::MaxMidiValue * 1.5f);
 
-    velocity = constrain(velocity, 1, 127);
+    velocity = constrain(velocity, Config::Midi::MinMidiValue, Config::Midi::MaxMidiValue);
 
     return velocity;
 }

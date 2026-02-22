@@ -19,5 +19,5 @@ private:
     bool _blinking = false;
     unsigned long _blinkInterval = 0;
     unsigned long _lastToggleTime = 0;
-    void applyState();
+    void applyState() const;
 };

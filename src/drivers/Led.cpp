@@ -14,7 +14,7 @@ void Led::on() {
     applyState();
 }
 
-void Led::off() {
+void Led:: off() {
     _blinking = false;
     _state = false;
     applyState();
@@ -38,7 +38,7 @@ void Led::stopBlink() {
 void Led::update() {
     if (!_blinking) return;
 
-    unsigned long now = millis();
+    const unsigned long now = millis();
 
     if (now - _lastToggleTime >= _blinkInterval) {
         _lastToggleTime = now;
@@ -46,7 +46,7 @@ void Led::update() {
     }
 }
 
-void Led::applyState() {
+void Led::applyState() const {
     if (_activeHigh) {
         digitalWrite(_pin, _state ? HIGH : LOW);
     } else {
