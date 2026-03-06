@@ -19,6 +19,7 @@ public:
     uint8_t getNote() const;
     uint16_t getVelocity() const;
     bool isHit() const;
+    uint16_t getPeakValue() const;
     static uint16_t calculateVelocity(int peak) ;
 
 private:

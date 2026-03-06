@@ -36,7 +36,7 @@ namespace Config
     namespace Piezo
     {
         extern uint16_t getCurrentThreshold();
-        constexpr uint16_t ResetThreshold = 50;
+        constexpr uint16_t ResetThreshold = 125;
         constexpr uint16_t WaitTime = 75;
         constexpr uint16_t ScanTime = 3000; // us
         constexpr uint16_t MaxADCValue = 4095;

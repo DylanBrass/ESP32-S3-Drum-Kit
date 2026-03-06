@@ -24,6 +24,11 @@ uint16_t PiezoSensor::getVelocity() const
     return _velocity;
 }
 
+uint16_t PiezoSensor::getPeakValue() const
+{
+    return _peakValue;
+}
+
 void PiezoSensor::update()
 {
     const unsigned long nowMicros = micros();
@@ -33,6 +38,10 @@ void PiezoSensor::update()
     analogRead(_pin);
     const int value = analogRead(_pin);
     _hit = false;
+    if (millis() - _lastHitTime < 45)
+    {
+        return;
+    }
 
     switch (_state)
     {
@@ -43,8 +52,10 @@ void PiezoSensor::update()
                 // In Clone Hero mode, we skip the velocity calculation and use a fixed velocity for simplicity and consistency
                 if (Config::IsCloneHeroMode)
                 {
+                    Serial.println("Hit with analog value " + String(value) + " in Clone Hero mode. Using fixed velocity " + String(Config::Piezo::CloneHeroDefaultVelocity));
                     _velocity = Config::Piezo::CloneHeroDefaultVelocity;
                     _hit = true;
+                    _peakValue = value;
                     _lastHitTime = nowMillis;
                     _state = PiezoState::Cooldown;
                     _debugLed.on();
@@ -52,6 +63,7 @@ void PiezoSensor::update()
                 }
 
                 _peakValue = value;
+                Serial.println("Hit detected with analog value " + String(value) + ". Starting peak capture.");
                 _scanStartTime = nowMicros;
                 _state = PiezoState::CapturingPeak;
             }

@@ -29,6 +29,4 @@ private:
     };
     void updateMode();
     void updatePads();
-    unsigned long _lastGlobalHitTime = 0;
-    uint16_t _lastGlobalPeak = 0;
 };
